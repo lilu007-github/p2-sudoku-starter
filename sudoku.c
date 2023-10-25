@@ -1,11 +1,13 @@
 // Sudoku puzzle verifier and solver
-
 #include <assert.h>
-#include <pthread.h>
+#include <pthread.h>  // Include the pthread header
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 typedef struct {
     int row;
@@ -17,6 +19,7 @@ typedef struct {
 int PSIZE = 0;
 int PSIZE_SQR = 0;
 
+pthread_mutex_t mutex;
 
 void * validateWorker(void *args) {
     
@@ -42,7 +45,10 @@ void * validateWorker(void *args) {
             // printf("%d ", grid[row][j]);
             if(grid[row][j] == 0)
             {
+              pthread_mutex_lock(&mutex);  // Lock the critical section
               result[rindex] = 2;
+              pthread_mutex_unlock(&mutex);  // Unlock the critical section
+              
               break;
             }
             flag[grid[row][j] - 1] = 1;
@@ -60,7 +66,9 @@ void * validateWorker(void *args) {
           //printf("k = %d\n", k);
           
           if(k >= PSIZE){
-            result[rindex] = 1;
+              pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 1;
+              pthread_mutex_unlock(&mutex);  // Unlock the critical section
             //printf("row:%d  %d\n", row, result[rindex]);
           }
         }
@@ -70,7 +78,9 @@ void * validateWorker(void *args) {
         {
           if(grid[i][col] == 0)
           {
-            result[rindex] = 2;
+              pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 2;
+              pthread_mutex_unlock(&mutex);  // Unlock the critical section
             break;
           }
           flag[grid[i][col] - 1] = 1;
@@ -88,7 +98,9 @@ void * validateWorker(void *args) {
           }
 
            if(k == PSIZE){
-            result[rindex] = 1;
+              pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 1;
+              pthread_mutex_unlock(&mutex);  // Unlock the critical section
             //printf("col:%d  %d\n", col, result[rindex]);
           }
         }
@@ -101,8 +113,10 @@ void * validateWorker(void *args) {
             {
               if(grid[i][j] == 0)
               {
-                result[rindex] = 2;
-                break;
+                  pthread_mutex_lock(&mutex);  // Lock the critical section
+                  result[rindex] = 2;
+                  pthread_mutex_unlock(&mutex);  // Unlock the critical section
+                  break;
               }
               flag[grid[i][j] - 1] = 1;
             }
@@ -118,7 +132,9 @@ void * validateWorker(void *args) {
            }
            
            if(k == PSIZE){
-            result[rindex] = 1;
+              pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 1;
+              pthread_mutex_unlock(&mutex);  // Unlock the critical section
             //printf("subgrid rindex:%d, result:%d\n", rindex, result[rindex]);
           }
         }
@@ -154,6 +170,8 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
     results[i] = 0;
   }
   pthread_t tids[threadsNum];
+  pthread_mutex_init(&mutex, NULL);
+
 
   int i, j;
   
@@ -198,18 +216,25 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
    for(i = 0; i < threadsNum; i ++){
         pthread_join(tids[i], NULL);
         //printf("results[%d] = %d\n", i, results[i]);
+    }
+
+    for (i = 0; i < threadsNum; i++)
+    {
+       if(results[i] == 2){
+         *complete = false;
+         *valid = false;
+         break;
+       }
         
-        if(results[i] == 2){
-            *complete = false;
-            *valid = false;
-            break;
-        }
-        else if(results[i] == 0)
-        {
+      if(results[i] == 0)
+      {
           *valid = false;
           break;
-        }
+      }
     }
+    
+  
+  pthread_mutex_destroy(&mutex);
 }
 
 
