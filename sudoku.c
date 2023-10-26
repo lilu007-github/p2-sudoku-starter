@@ -37,21 +37,40 @@ void * validateWorker(void *args) {
     int** grid = para->grid;  // Retrieve the grid from parameters
     int * result = para->result; 
 
+    int sum = ((1+ PSIZE) * PSIZE)/2;
+    int currentSum = 0;
+    int zeroCount = 0;
+    int zeroRow = 0;
+    int zeroCol =0;
+
     //validate row
     if(row != -1 && col == -1){ 
         // printf("\n");
         int rindex = row -1;
+        
         for(int j = 1; j <= PSIZE; j ++){
             // printf("%d ", grid[row][j]);
             if(grid[row][j] == 0)
             {
-              pthread_mutex_lock(&mutex);  // Lock the critical section
-              result[rindex] = 2;
-              pthread_mutex_unlock(&mutex);  // Unlock the critical section
-              
-              break;
+              zeroCount++;
+              zeroRow = row;
+              zeroCol = j;
+              continue;
             }
+            currentSum += grid[row][j];
             flag[grid[row][j] - 1] = 1;
+        }
+
+        if(zeroCount == 1)
+        {
+          grid[zeroRow][zeroCol] = sum - currentSum;
+          flag[grid[zeroRow][zeroCol] - 1] = 1;
+        }
+        else if(zeroCount > 1)
+        {
+           pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 2;
+           pthread_mutex_unlock(&mutex);  // Unlock the critical section
         }
 
         if(result[rindex] != 2)
@@ -78,12 +97,26 @@ void * validateWorker(void *args) {
         {
           if(grid[i][col] == 0)
           {
-              pthread_mutex_lock(&mutex);  // Lock the critical section
-              result[rindex] = 2;
-              pthread_mutex_unlock(&mutex);  // Unlock the critical section
-            break;
+              zeroCount++;
+              zeroRow = i;
+              zeroCol = col;
+              continue;
           }
+          
+          currentSum += grid[i][col];
           flag[grid[i][col] - 1] = 1;
+        }
+
+        if(zeroCount == 1)
+        {
+          grid[zeroRow][zeroCol] = sum - currentSum;
+          flag[grid[zeroRow][zeroCol] - 1] = 1;
+        }
+        else if(zeroCount > 1)
+        {
+           pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 2;
+           pthread_mutex_unlock(&mutex);  // Unlock the critical section
         }
 
         if(result[rindex] != 2)
@@ -113,14 +146,27 @@ void * validateWorker(void *args) {
             {
               if(grid[i][j] == 0)
               {
-                  pthread_mutex_lock(&mutex);  // Lock the critical section
-                  result[rindex] = 2;
-                  pthread_mutex_unlock(&mutex);  // Unlock the critical section
-                  break;
+                zeroCount++;
+                zeroRow = i;
+                zeroCol = j;
+                continue;
               }
+              currentSum += grid[i][col];
               flag[grid[i][j] - 1] = 1;
             }
         
+        if(zeroCount == 1)
+        {
+          grid[zeroRow][zeroCol] = sum - currentSum;
+          flag[grid[zeroRow][zeroCol] - 1] = 1;
+        }
+        else if(zeroCount > 1)
+        {
+           pthread_mutex_lock(&mutex);  // Lock the critical section
+              result[rindex] = 2;
+           pthread_mutex_unlock(&mutex);  // Unlock the critical section
+        }
+
         if(result[rindex] != 2)
         {
            int k;

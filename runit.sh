@@ -6,7 +6,8 @@ gcc -Wall -Wextra -pthread -std=c99 sudoku.c -o sudoku -lm
 ./sudoku puzzle9-valid.txt
 ./sudoku puzzle2-valid.txt
 ./sudoku puzzle2-invalid.txt
-./sudoku puzzle2-fill-valid.txt
+./sudoku puzzle2-fill-validOnly1Zero.txt
+#./sudoku puzzle2-fill-valid.txt
 
 # to check for memory leaks, use
 # valgrind ./sudoku puzzle9-good.txt
